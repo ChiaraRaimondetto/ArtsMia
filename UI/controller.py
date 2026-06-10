@@ -9,8 +9,69 @@ class Controller:
         self._model = model
 
     def handleAnalizzaOggetti(self, e):
-        pass
+        self._model.buildGraph()
+        self._view.txt_result.controls.clear()
+        self._view.txt_result.controls.append(ft.Text("Grafo correttamente creato."))
+        self._view.txt_result.controls.append(ft.Text(f"Il grafo contiene {self._model.getNumNodes()} nodi e {self._model.getNumEdges()} archi"))
+        self._view._txtIdOggetto.disabled = False
+        self._view._btnCompConnessa.disabled = False
+        self._view.update_page()
 
     def handleCompConnessa(self,e):
-        pass
+        txtIdOggetto=self._view._txtIdOggetto.value
 
+        if txtIdOggetto=="":
+            self._view.txt_result.controls.clear()
+            self._view.txt_result.controls.append(ft.Text("Attenzione inserire un valore nel campo id", color="red"))
+            self._view.update_page()
+            return
+        try:
+            idOggetto=int(txtIdOggetto)
+        except ValueError:
+            self._view.txt_result.controls.clear()
+            self._view.txt_result.controls.append(ft.Text("Attenzione inserire un valore numerico nel campo id", color="red"))
+            self._view.update_page()
+            return
+        if not self._model.hasNode(idOggetto):
+            self._view.txt_result.controls.clear()
+            self._view.txt_result.controls.append(ft.Text("Attenzione l'id inserito non è presente nel grafo", color="orange"))
+            self._view.update_page()
+            return
+        sizeCompConn=self._model.getInfoCompConnessa(idOggetto)
+        self._view.txt_result.controls.clear()
+        self._view.txt_result.controls.append(
+            ft.Text(f"La componente connessa contenente ò'ogetto con id {idOggetto} è composta di {sizeCompConn} nodi", color="green"))
+
+        self._view._ddLun.disabled = False
+        self._view._btnCerca.disabled = False
+
+        lunValues=list(range(2,sizeCompConn)) #lista di interi
+
+        #for v in lunValues:
+        #    self._view._ddLun.options.append(ft.dropdown.Option(v))
+
+        #prende una lista, per ogni elemento della lista applica una funzione e poi l'aggiunge in
+        lunValuesDD=map(lambda x:ft.dropdown.Option(x),lunValues)#lista di oggetti di tipo options
+
+        self._view._ddLun.options=lunValuesDD
+
+        self._view.update_page()
+
+    def handleCerca(self,e):
+        source=self._model.getNodeFromId(int(self._view._txtIdOggetto.value))
+
+        lun =self._view._ddLun.value
+
+        if lun is None:
+            self._view.txt_result.controls.clear()
+            self._view.txt_result.controls.append(ft.Text("Attenzipne, selezionare un valore di lunghezza fra le scelte proposte",color="red"))
+            self._view.update_page()
+            return
+        lunInt=int(lun)
+        path,costo=self._model.getOptPath(source,lunInt)
+        self._view.txt_result.controls.clear()
+        self._view.txt_result.controls.append(ft.Text(f"Ho trovato un cammino che parte da {source} che ha un peso tale pari a {costo}", color="green"))
+        self._view.txt_result.controls.append(ft.Text("Di seguito i nodi che compongono questo cammino:",color="green"))
+        for p in path:
+            self._view.txt_result.controls.append(ft.Text(p))
+        self._view.update_page()
